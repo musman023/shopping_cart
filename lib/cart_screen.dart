@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shopping_cart/cart_model.dart';
 import 'package:shopping_cart/cart_provider.dart';
+import 'package:shopping_cart/database.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key});
@@ -13,6 +14,7 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
+  DBHelper dbHelper = DBHelper();
   @override
   Widget build(BuildContext context) {
     final cart = Provider.of<CartProvider>(context);
@@ -78,14 +80,35 @@ class _CartScreenState extends State<CartScreen> {
                                             crossAxisAlignment:
                                                 CrossAxisAlignment.start,
                                             children: [
-                                              Text(
-                                                snapshot
-                                                    .data![index].productName
-                                                    .toString(),
-                                                style: const TextStyle(
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment
+                                                        .spaceBetween,
+                                                children: [
+                                                  Text(
+                                                    snapshot.data![index]
+                                                        .productName
+                                                        .toString(),
+                                                    style: const TextStyle(
+                                                      fontSize: 16,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                  InkWell(
+                                                      onTap: () {
+                                                        dbHelper.delete(snapshot
+                                                            .data![index].id!);
+                                                        cart.removeCounter();
+                                                        cart.removeTotalPrice(
+                                                            double.parse(snapshot
+                                                                .data![index]
+                                                                .productPrice
+                                                                .toString()));
+                                                      },
+                                                      child: const Icon(
+                                                          Icons.delete)),
+                                                ],
                                               ),
                                               Text(snapshot.data![index].unitTag
                                                       .toString() +
@@ -134,7 +157,21 @@ class _CartScreenState extends State<CartScreen> {
                           }));
                 }
                 return Container();
-              })
+              }),
+          Consumer<CartProvider>(builder: (context, value, child) {
+            return Visibility(
+              visible: value.getTotalPrice().toStringAsFixed(2) == "0.00"
+                  ? false
+                  : true,
+              child: Column(
+                children: [
+                  ReuseAbleWidget(
+                      title: 'Sub Total',
+                      value: r'$' + value.getTotalPrice().toStringAsFixed(2))
+                ],
+              ),
+            );
+          })
         ],
       ),
     );
@@ -148,16 +185,17 @@ class ReuseAbleWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 20),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             title,
-            style: Theme.of(context).textTheme.titleSmall,
+            style: Theme.of(context).textTheme.subtitle2,
           ),
           Text(
             value.toString(),
-            style: Theme.of(context).textTheme.titleSmall,
+            style: Theme.of(context).textTheme.subtitle2,
           )
         ],
       ),
